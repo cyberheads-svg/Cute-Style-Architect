@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja" style="background:#0c0b0e">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cute Style Architect</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap');
+  :root{
+    --bg:#0c0b0e;--panel:#131118;--border:#22202a;--border2:#332f40;
+    --text:#d4cee0;--muted:#6a6278;--dim:#2a2535;
+    --accent:#f9a8d4;--mono:'DM Mono',monospace;--serif:'DM Serif Display',serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:#0c0b0e}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 60px}
+  header{text-align:center;margin-bottom:32px}
+  .eyebrow{font-size:10px;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  h1{font-family:var(--serif);font-style:italic;font-size:clamp(28px,5vw,46px);color:#fff;font-weight:400;line-height:1.1;margin-bottom:4px}
+  h1 span{color:var(--accent)}
+  .subtitle{font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:.15em}
+  .card{width:100%;max-width:680px;background:var(--panel);border:1px solid var(--border);padding:32px;margin-bottom:20px;border-radius:4px}
+  .fields{display:flex;flex-direction:column;gap:0}
+  .field-row{display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--border)}
+  .field-row:last-child{border-bottom:none}
+  .field-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding-top:4px}
+  .field-value{font-family:var(--serif);font-style:italic;font-size:15px;line-height:1.4}
+  .field-controls{display:flex;gap:4px}
+  .lock-btn,.reroll-btn{background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:6px 8px;transition:all .15s;opacity:0.5}
+  .lock-btn:hover,.reroll-btn:hover{color:var(--accent);opacity:1}
+  .lock-btn.locked{color:#f9a8d4;opacity:1}
+  .divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+  .prompt-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .prompt-textarea{width:100%;background:#0a080c;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:11px;line-height:1.9;padding:12px;resize:vertical;min-height:120px;margin-bottom:14px;word-break:break-word;cursor:pointer}
+  .prompt-textarea:focus{outline:none;border-color:var(--accent)}
+  .btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+  .btn{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:10px 18px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;font-family:var(--mono);transition:all .2s;border-radius:2px}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-primary{background:#f9a8d4;color:#0c0b0e;font-weight:600;border:none}
+  .btn-primary:hover{background:#f472b6}
+  .section-label{font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  footer{margin-top:20px;font-size:9px;color:var(--dim);letter-spacing:.2em;text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Cute Style Series / v1.0</div>
+  <h1>Cute Style <span>Architect</span></h1>
+  <div class="subtitle">かわいい背景 × かわいいファッションを、シンプルに組み合わせる</div>
+</header>
+
+<div class="card">
+  <!-- Background -->
+  <div class="section-label">🎀 かわいい背景</div>
+  <div class="fields">
+    <div class="field-row">
+      <div class="field-label">Background</div>
+      <div class="field-value" id="v-background">—</div>
+      <div class="field-controls">
+        <button class="lock-btn" id="bg-lock-btn" onclick="toggleBackgroundLock()" aria-label="背景をロック">🔓</button>
+        <button class="reroll-btn" onclick="rerollBackground()" aria-label="背景を再生成">🔄</button>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="generateBackground()">GENERATE BACKGROUND</button>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Fashion -->
+  <div class="section-label">👗 かわいいファッション</div>
+  <div class="fields" id="fashionFields">
+    <!-- Populated by JS -->
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="generateFashion()">GENERATE FASHION</button>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Prompt -->
+  <div class="prompt-label">画像AIにコピー</div>
+  <textarea class="prompt-textarea" id="prompt" readonly placeholder="背景とファッションを生成してください"></textarea>
+  <div class="btn-row">
+    <button class="btn" onclick="copyPrompt()">COPY PROMPT</button>
+    <button class="btn btn-primary" onclick="generateAll()">GENERATE ALL</button>
+  </div>
+</div>
+
+<footer>
+  © 2026 Cute Style Series — Made with 💖
+</footer>
+
+<script>
+// Kawaii Background Data
+const KAWAII_BG = {
+  motif: ["melting ice cream with glitter flakes","layered frill cake with ribbons","frilly ribbon bows with pearls","pastel syringe with heart liquid","pixelated tamagotchi icons","90s flip phone silhouettes","strawberry milk splashes","crinkled holographic PVC","star-shaped candy drops","shimmering perfume bottles","glass slippers with ribbons","moon macarons","dreamy carousel horses","checkered heart patches","velvet rosettes with silver charms","satin ribbon streamers","pearl necklaces strings","blood-dripping teddy bears","barbed wire with lace","dark-eyed doll faces","metallic pill capsules","neon jelly heart stickers","rainbow butterfly clips","star sunglasses","clunky platform boots","graffiti star tags","tulle lace layers","faux fur texture","heart-shaped stitches","butterfly wing patterns","iridescent sea shells","soft swan silhouettes","crystal prism shards","origami cranes","tiny golden bells","frilly apron lace","tiara silhouettes","magical wands","glittering crowns","soft-serve swirls","lollipop swirls","gummy rings","candy necklaces","beaded bracelets","ribbon chokers","fluffy slippers","lace headbands","cherry blossom petals","cat ear silhouettes","bunny tail puffs","pastel macarons","cyber wings","circuit hearts","neon tubes","fuzzy pom-poms","silk rosettes","chrome hearts","glass marbles","holographic butterflies","marshmallows","checkered ribbons","starry constellations","lace fans","sparkle emojis","floating balloons","jelly beans","layered ruffles","scalloped lace","beaded curtains","pearl strands","sequin textures","glitter stars","velvet bows","satin ribbons","fluffy kittens","small bunnies","cupcake swirls","fruit slices","lemon drops","mint leaves","lavender buds","pink roses","daisy chains","firefly glow","dreamcatchers","stuffed animals","teddy bear heads","strawberry slices","whipped cream peaks","pastel feathers","chibi angel wings","corset bows","glitter jelly shoes","pom-pom earrings","starry hair clips","heart lollipops","puffy stickers","pixel stars","glossy hearts"],
+  structure: ["dense seamless tile","scattered floating","diagonal candy stripes","bubble wrap grid","radial heart symmetry","uniform isometric grid","layered overlapping elements","scalloped border repeat","honeycomb icon layout","spiral motif arrangement","staggered offset pattern","rhythmic heart pulse","chaotic decora explosion","concentric circle ripples","checkerboard icon grid","linear element flow","woven ribbon texture","dense sticker-bombing"],
+  palette: ["yumekawaii lavender","strawberry milk pink","cyber kawaii neon pink","pastel goth black/pink","angel core white/gold","y2k metallic pink/blue","healing sage/blush","acid green/purple pop","marshmallow peach/blue","menhera dark red/black","creamy vanilla","90s anime bright palette","dreamy sunset gradient","icy winter pastel blue","vintage toy bright","soft lilac","pudding yellow","magical girl transformation glow","soft velvet teal/rose","neon gummy candy colors"],
+  vibe: ["soft and dreamy","chaotic but cute","extremely healing","nostalgic 90s-2000s","sentimental","street fashion kawaii","elegant princess","slightly surreal","energetic and playful","darkly sweet","pure and innocent","hyper-active decora","modernist minimal cute","fairy-tale magical","sweet and airy","bittersweet memory","playful and mischievous","luxurious and fancy","underground harajuku style","ethereal and heavenly"],
+  details: ["sparkling glitter dust","pastel airbrushing","pearl sheen","delicate lace embroidery","puffy 3D sticker finish","halftone heart screen tones","iridescent holographic film","manga-style empty frames","glossy jelly finish","soft-focus bokeh hearts","pastel chromatic aberration","heart-shaped light leaks","glitter gel pen strokes","watercolor bleed edges","3D clay-like volume","soft airbrushed grain","reflective plastic sheen","embroidered patch edges","fine ink pen sparkles","layered transparency effect"],
+  medium: ["vector kawaii illustration","90s anime cel-shading","soft pastel gouache","3D cute matte render","digital sticker sheet style","risograph print texture","glitter gel art","watercolor wash","claymation aesthetic","pixel art cute style","airbrushed street art","screen print vintage","3D glossy plastic render","felt and fabric collage","pencil sketch and pastel","chalk-like soft texture","iridescent digital painting","high-gloss vinyl render","embroidery art style","mixed media cute collage"]
+};
+
+// Cute Fashion Data
+const CUTE_FASHION = {
+  style: ["moe casual schoolgirl off-duty","soft moe aesthetic pastel","maid cafe aesthetic street version","magical girl civilian mode","Tokyo moe layered pastel","twin-tail ribbon casual","soft girl Tokyo edition","Akihabara idol fan fashion","heavily frilled dreamy pastel aesthetic","kawaii character fan meetup look","yumekawaii lavender dress","strawberry milk pink coord","cyber kawaii neon accent","pastel goth black/pink mix","angel core white/gold","y2k metallic pink/blue","healing sage/blush tones","acid green/purple pop","marshmallow peach/blue","90s anime bright palette","dreamy sunset gradient","vintage toy bright colors","magical girl transformation glow"],
+  top: ["oversized graphic tee with heart print","bold kanji graphic oversized tee","multi-frill pastel camisole","balloon-sleeve highly detailed floral print top","fairy kei mix-print layered top","pink gingham double-frill blouse","pastel teddy bear print oversized sweater","kawaii fruit print puff sleeve top","rainbow heart knit cardigan","lavender lace trim sailor blouse","mint green ruffle collar blouse","pastel fairy wing print tee","multi bow detail knit top","soft girl layered frill blouse","frilly lace blouse with pearl buttons","pastel striped off-shoulder top","heart print puff sleeve blouse","ribbon tie sailor blouse","oversized sweater with bunny print","lace trim camisole with bow"],
+  bottom: ["layered skirt over patterned trousers","pleated midi skirt asymmetrical mix-print","high-waisted wide slacks with ribbon","A-line structured maxi skirt","balloon fit denim with heart patches","culottes with side slits and lace","cargo shorts baggy with pastel accents","tapered tech pants with frill hem","high-waisted technical slacks with bow","wide leg ripstop cargo with heart print","minimalist wool pleated trousers","straight leg selvedge chinos with lace","technical nylon joggers with pastel stripe","A-line midi tech skirt with frill","utilitarian carpenter pants with ribbon","matte black performance leggings with heart","sculptural asymmetric skirt with lace","pleated mini skirt with bunny print","high-waisted shorts with suspenders","layered tulle skirt with pastel colors"],
+  shoe: ["platform Mary Janes with heart buckle","chunky lug-sole loafers with ribbon","glitter jelly shoes with bow","pastel platform sneakers with heart print","white sneakers with pastel laces","black loafers with silver heart charm","pink sneakers with bunny print","white Mary Janes with pearl strap","pastel boots with heart zipper","white sneakers with glitter sole"],
+  accessory: ["silver chain necklace with heart pendant","pom-pom earrings","starry hair clips","lace headbands","ribbon chokers","beaded bracelets","pearl necklaces","cat ear hair clips","bunny tail keychain","heart-shaped sunglasses","pastel scrunchies","lace gloves","frilly socks"]
+};
+
+let currentBackground = "";
+let currentFashion = {};
+let lockedFields = {};
+let lockedBackground = false;
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generateBackground() {
+  if (lockedBackground) return;
+  const d = KAWAII_BG;
+  currentBackground = `${pick(d.motif)}, ${pick(d.structure)}, color palette: ${pick(d.palette)}, ${pick(d.details)}, vibe: ${pick(d.vibe)}, ${pick(d.medium)}`;
+  document.getElementById("v-background").textContent = currentBackground.substring(0, 60) + "...";
+  rebuildPrompt();
+}
+
+function rerollBackground() {
+  if (lockedBackground || !currentBackground) return;
+  const d = KAWAII_BG;
+  currentBackground = `${pick(d.motif)}, ${pick(d.structure)}, color palette: ${pick(d.palette)}, ${pick(d.details)}, vibe: ${pick(d.vibe)}, ${pick(d.medium)}`;
+  document.getElementById("v-background").textContent = currentBackground.substring(0, 60) + "...";
+  rebuildPrompt();
+}
+
+function generateFashion() {
+  const d = CUTE_FASHION;
+  const newFashion = {
+    style: pick(d.style),
+    top: pick(d.top),
+    bottom: pick(d.bottom),
+    shoe: pick(d.shoe),
+    accessory: pick(d.accessory)
+  };
+  // Preserve locked fields
+  Object.keys(lockedFields).forEach(key => {
+    if (lockedFields[key] && currentFashion[key]) {
+      newFashion[key] = currentFashion[key];
+    }
+  });
+  currentFashion = newFashion;
+  renderFashionFields();
+  rebuildPrompt();
+}
+
+function rerollField(field) {
+  if (lockedFields[field]) return;
+  const d = CUTE_FASHION;
+  currentFashion[field] = pick(d[field]);
+  renderFashionFields();
+  rebuildPrompt();
+}
+
+function toggleLock(field) {
+  lockedFields[field] = !lockedFields[field];
+  renderFashionFields();
+}
+
+function toggleBackgroundLock() {
+  lockedBackground = !lockedBackground;
+  const btn = document.getElementById("bg-lock-btn");
+  if (btn) {
+    btn.textContent = lockedBackground ? "🔒" : "🔓";
+    btn.classList.toggle("locked", lockedBackground);
+  }
+  if (lockedBackground) {
+    document.getElementById("v-background").style.opacity = "0.7";
+  } else {
+    document.getElementById("v-background").style.opacity = "1";
+  }
+}
+
+function renderFashionFields() {
+  const container = document.getElementById("fashionFields");
+  container.innerHTML = "";
+  
+  const fields = [
+    { key: "style", label: "Style" },
+    { key: "top", label: "Top" },
+    { key: "bottom", label: "Bottom" },
+    { key: "shoe", label: "Shoes" },
+    { key: "accessory", label: "Accessory" }
+  ];
+  
+  fields.forEach(f => {
+    const row = document.createElement("div");
+    row.className = "field-row";
+    row.innerHTML = `
+      <div class="field-label">${f.label}</div>
+      <div class="field-value" id="v-${f.key}">${currentFashion[f.key] || "—"}</div>
+      <div class="field-controls">
+        <button class="lock-btn ${lockedFields[f.key] ? 'locked' : ''}" onclick="toggleLock('${f.key}')" aria-label="${f.label}をロック">${lockedFields[f.key] ? '🔒' : '🔓'}</button>
+        <button class="reroll-btn" onclick="rerollField('${f.key}')" aria-label="${f.label}を再生成">🔄</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function rebuildPrompt() {
+  const ta = document.getElementById("prompt");
+  let parts = [];
+  
+  if (currentBackground) {
+    parts.push(`studio background: ${currentBackground}, kawaii pattern wallpaper, COMPLETELY ORIGINAL CHARACTER DESIGN, NO COPYRIGHTED CHARACTERS, NO SANRIO, NO DISNEY, NO POKEMON, NO RECOGNIZABLE MASCOT, generic cute mascot style, original creation only`);
+  } else {
+    parts.push("pure white seamless studio background");
+  }
+  
+  if (currentFashion.style) {
+    parts.push("young Japanese woman, cute kawaii fashion editorial shot");
+    parts.push(currentFashion.style);
+    parts.push(currentFashion.top);
+    parts.push(currentFashion.bottom);
+    parts.push(currentFashion.shoe);
+    parts.push(`accessories: ${currentFashion.accessory}`);
+    parts.push("high-key studio lighting, soft shadow, professional cute photography");
+    parts.push("clean crisp image, hyper-detailed, 85mm lens");
+    parts.push("kawaii fashion editorial, playful and stylish, full color");
+  }
+  
+  ta.value = parts.join(", ");
+}
+
+function generateAll() {
+  generateBackground();
+  generateFashion();
+}
+
+function copyPrompt() {
+  const ta = document.getElementById("prompt");
+  if (!ta.value) return;
+  navigator.clipboard.writeText(ta.value);
+  
+  // Toast notification
+  const toast = document.createElement("div");
+  toast.textContent = "✓ COPIED";
+  toast.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#f9a8d4;color:#0c0b0e;padding:8px 20px;border-radius:4px;font-size:11px;letter-spacing:0.1em;z-index:9999";
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.transition = "opacity 0.3s";
+    toast.style.opacity = "0";
+    setTimeout(() => document.body.removeChild(toast), 300);
+  }, 1200);
+}
+
+// Initial state
+function init() {
+  document.getElementById("v-background").textContent = "—";
+  renderFashionFields();
+  // Auto-generate on first load for better first impression
+  setTimeout(() => {
+    generateAll();
+  }, 300);
+}
+
+init();
+</script>
+</body>
+</html>
